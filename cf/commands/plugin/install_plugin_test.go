@@ -1,7 +1,7 @@
 package plugin_test
 
 import (
-	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -183,10 +183,11 @@ var _ = Describe("Install", func() {
 
 					BeforeEach(func() {
 						h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-							file, err := ioutil.ReadFile(test_1)
+							file, err := os.Open(test_1)
 							Ω(err).ShouldNot(HaveOccurred())
+							defer file.Close()
 
-							_, err = w.Write(file)
+							_, err = io.Copy(w, file)
 							Ω(err).ShouldNot(HaveOccurred())
 						})
 
@@ -281,7 +282,12 @@ var _ = Describe("Install", func() {
 
 				It("downloads and installs binary when it is available", func() {
 					h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						fmt.Fprintln(w, "hi")
+						file, err := os.Open(test_1)
+						Ω(err).ShouldNot(HaveOccurred())
+						defer file.Close()
+
+						_, err = io.Copy(w, file)
+						Ω(err).ShouldNot(HaveOccurred())
 					})
 
 					testServer := httptest.NewServer(h)
@@ -289,7 +295,7 @@ var _ = Describe("Install", func() {
 
 					runCommand(testServer.URL + "/testfile.exe")
 
-					Ω(ui.Outputs).To(ContainSubstrings([]string{"3 bytes downloaded..."}))
+					Ω(ui.Outputs).To(ContainSubstrings([]string{"bytes downloaded..."}))
 					Ω(ui.Outputs).To(ContainSubstrings([]string{"FAILED"}))
 					Ω(ui.Outputs).To(ContainSubstrings([]string{"Installing plugin"}))
 				})
