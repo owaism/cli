@@ -80,6 +80,10 @@ func (cmd *UnmapRoute) Run(c *cli.Context) {
 
 	var routeFound bool
 	for _, routeApp := range route.Apps {
+		cmd.ui.Say(T("Route APP guid  {{.RouteAppGuid}} And APP GUID {{.AppGuid}}",
+		map[string]interface{}{
+			"RouteAppGuid": terminal.EntityNameColor(routeApp.Guid),
+			"AppGuid": terminal.EntityNameColor(app.Guid)}))
 		if routeApp.Guid == app.Guid {
 			routeFound = true
 			apiErr = cmd.routeRepo.Unbind(route.Guid, app.Guid)
